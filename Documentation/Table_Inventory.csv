@@ -1,0 +1,21 @@
+﻿Table,Partition type,Auto date table
+01 Appointment Measures,calculated,No
+02 Time Intelligence,calculated,No
+03 Operational Measures,calculated,No
+04 Patient Measures,calculated,No
+05 Improvement Measures,calculated,No
+06_Dynamic_Insights,calculated,No
+calendar,calculated,No
+Capacity Waterfall,calculated,No
+DateTableTemplate_b40c29dd-eeee-40c5-9544-a7fd3bde7a39,calculated,Yes
+dim_hospitals,m,No
+dim_patients,m,No
+dim_specialties,m,No
+DNA Reduction Target,calculated,No
+fact_appointments,m,No
+fact_daily_capacity,m,No
+LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de,calculated,Yes
+LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c,calculated,Yes
+LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c,calculated,Yes
+Operational Heatmap Selector,calculated,No
+Scenario Comparison,calculated,No

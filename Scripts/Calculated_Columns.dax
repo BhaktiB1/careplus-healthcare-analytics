@@ -1,0 +1,93 @@
+// Table: dim_patients
+Age Group =
+SWITCH(
+    TRUE(),
+    dim_patients[age_at_reference] < 18,
+        "0–17",
+    dim_patients[age_at_reference] < 30,
+        "18–29",
+    dim_patients[age_at_reference] < 45,
+        "30–44",
+    dim_patients[age_at_reference] < 60,
+        "45–59",
+    dim_patients[age_at_reference] < 75,
+        "60–74",
+    "75+"
+)
+
+// Table: fact_appointments
+Lead Time Band =
+SWITCH(
+    TRUE(),
+    fact_appointments[lead_time_days] <= 7,
+        "0–7 days",
+    fact_appointments[lead_time_days] <= 14,
+        "8–14 days",
+    fact_appointments[lead_time_days] <= 28,
+        "15–28 days",
+    fact_appointments[lead_time_days] <= 56,
+        "29–56 days",
+    "57+ days"
+)
+
+// Table: fact_appointments
+Lead Time Band Sort =
+VAR Days = fact_appointments[lead_time_days]
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK(Days), BLANK(),
+        Days <= 7, 1,
+        Days <= 14, 2,
+        Days <= 28, 3,
+        Days <= 56, 4,
+        5
+    )
+
+// Table: fact_appointments
+Appointment Day =
+FORMAT(
+    fact_appointments[appointment_date],
+    "dddd"
+)
+
+// Table: fact_appointments
+Appointment Day Sort =
+WEEKDAY(
+    fact_appointments[appointment_date],
+    2
+)
+
+// Table: fact_appointments
+Appointment Time Band =
+VAR ApptHour =
+    HOUR(fact_appointments[appointment_time])
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK(fact_appointments[appointment_time]), BLANK(),
+        ApptHour < 8, "Before 08:00",
+        ApptHour < 10, "08:00–10:00",
+        ApptHour < 12, "10:00–12:00",
+        ApptHour < 14, "12:00–14:00",
+        ApptHour < 16, "14:00–16:00",
+        ApptHour < 18, "16:00–18:00",
+        "18:00 onwards"
+    )
+
+// Table: fact_appointments
+Appointment Time Band Sort =
+VAR ApptHour =
+    HOUR(fact_appointments[appointment_time])
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK(fact_appointments[appointment_time]), BLANK(),
+        ApptHour < 8, 1,
+        ApptHour < 10, 2,
+        ApptHour < 12, 3,
+        ApptHour < 14, 4,
+        ApptHour < 16, 5,
+        ApptHour < 18, 6,
+        7
+    )

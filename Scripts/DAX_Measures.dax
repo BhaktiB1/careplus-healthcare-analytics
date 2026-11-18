@@ -1,0 +1,866 @@
+// Reference definitions; copy individually into Power BI.
+
+// Table: 01 Appointment Measures
+Total Appointments =
+COUNTROWS(fact_appointments)
+
+// Table: 01 Appointment Measures
+DNA Appointments =
+CALCULATE(
+    [Total Appointments],
+    fact_appointments[dna_flag] = 1
+)
+
+// Table: 01 Appointment Measures
+Cancelled Appointments =
+CALCULATE(
+    [Total Appointments],
+    fact_appointments[cancelled_flag] = 1
+)
+
+// Table: 01 Appointment Measures
+DNA Rate % =
+DIVIDE(
+    [DNA Appointments],
+    [Attended Appointments] + [DNA Appointments]
+)
+
+// Table: 01 Appointment Measures
+Attendance Rate % =
+DIVIDE(
+    [Attended Appointments],
+    [Attended Appointments] + [DNA Appointments]
+)
+
+// Table: 01 Appointment Measures
+Attended Appointments =
+CALCULATE(
+    [Total Appointments],
+    fact_appointments[attended_flag] = 1
+)
+
+// Table: 01 Appointment Measures
+Completed Outcome Appointments =
+[Attended Appointments] + [DNA Appointments]
+
+// Table: 01 Appointment Measures
+Cancellation Rate % =
+DIVIDE(
+    [Cancelled Appointments],
+    [Total Appointments]
+)
+
+// Table: 01 Appointment Measures
+DNA Contribution % =
+DIVIDE(
+    [DNA Appointments],
+    CALCULATE(
+        [DNA Appointments],
+        ALLSELECTED(dim_specialties)
+    )
+)
+
+// Table: 01 Appointment Measures
+Average Appointments per Month =
+AVERAGEX(
+    VALUES(calendar[Year Month]),
+    [Total Appointments]
+)
+
+// Table: 01 Appointment Measures
+DNA Heatmap Colour =
+VAR Rate = [DNA Rate %]
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK(Rate), BLANK(),
+        Rate >= 0.08, "#F4CCCC",
+        Rate >= 0.06, "#FCE5CD",
+        "#D9EAD3"
+    )
+
+// Table: 01 Appointment Measures
+Non-Attended Slots =
+[Scheduled Slots] - [Attended Appointments]
+
+// Table: 01 Appointment Measures
+Scheduled Appointments =
+COUNTROWS(fact_appointments)
+
+// Table: 02 Time Intelligence
+Total Appointments PY =
+CALCULATE(
+    [Total Appointments],
+    SAMEPERIODLASTYEAR(calendar[Date])
+)
+
+// Table: 02 Time Intelligence
+Appointments YoY % =
+DIVIDE(
+    [Total Appointments] - [Total Appointments PY],
+    [Total Appointments PY]
+)
+
+// Table: 02 Time Intelligence
+DNA Appointments PY =
+CALCULATE(
+    [DNA Appointments],
+    SAMEPERIODLASTYEAR(calendar[Date])
+)
+
+// Table: 02 Time Intelligence
+DNA Rate PY =
+CALCULATE(
+    [DNA Rate %],
+    SAMEPERIODLASTYEAR(calendar[Date])
+)
+
+// Table: 02 Time Intelligence
+DNA Rate YoY pp =
+VAR PreviousRate = [DNA Rate PY]
+RETURN
+IF(
+    NOT ISBLANK(PreviousRate),
+    ([DNA Rate %] - PreviousRate) * 100
+)
+
+// Table: 02 Time Intelligence
+Attendance Rate PY =
+CALCULATE(
+    [Attendance Rate %],
+    SAMEPERIODLASTYEAR(calendar[Date])
+)
+
+// Table: 02 Time Intelligence
+Rolling 12M Appointments =
+CALCULATE(
+    [Total Appointments],
+    DATESINPERIOD(
+        calendar[Date],
+        MAX(calendar[Date]),
+        -12,
+        MONTH
+    )
+)
+
+// Table: 02 Time Intelligence
+Rolling 12M DNA Rate =
+CALCULATE(
+    [DNA Rate %],
+    DATESINPERIOD(
+        calendar[Date],
+        MAX(calendar[Date]),
+        -12,
+        MONTH
+    )
+)
+
+// Table: 03 Operational Measures
+Scheduled Slots =
+SUM(fact_daily_capacity[scheduled_slots])
+
+// Table: 03 Operational Measures
+Available Slots Estimate =
+SUM(
+    fact_daily_capacity[available_slots_estimate]
+)
+
+// Table: 03 Operational Measures
+Scheduled Slot Attendance % =
+DIVIDE(
+    [Attended Slots],
+    [Scheduled Slots]
+)
+
+// Table: 03 Operational Measures
+Attended Slots =
+SUM(fact_daily_capacity[attended_slots])
+
+// Table: 03 Operational Measures
+Total Slot Hours =
+DIVIDE(
+    SUM(fact_appointments[slot_minutes]),
+    60
+)
+
+// Table: 03 Operational Measures
+Attended Slot Hours =
+DIVIDE(
+    CALCULATE(
+        SUM(fact_appointments[slot_minutes]),
+        fact_appointments[attended_flag] = 1
+    ),
+    60
+)
+
+// Table: 03 Operational Measures
+Average Lead Time =
+AVERAGE(fact_appointments[lead_time_days])
+
+// Table: 03 Operational Measures
+Average Slot Duration =
+AVERAGE(fact_appointments[slot_minutes])
+
+// Table: 03 Operational Measures
+DNA Slot Hours =
+DIVIDE(
+    CALCULATE(
+        SUM(fact_appointments[slot_minutes]),
+        fact_appointments[dna_flag] = 1
+    ),
+    60
+)
+
+// Table: 03 Operational Measures
+Capacity Utilisation % =
+DIVIDE(
+    [Attended Slots],
+    [Scheduled Slots]
+)
+
+// Table: 03 Operational Measures
+Capacity Waterfall Value =
+SWITCH(
+    SELECTEDVALUE('Capacity Waterfall'[Stage]),
+    "Scheduled", [Scheduled Slots],
+    "Cancelled", -[Cancelled Appointments],
+    "DNA", -[DNA Appointments],
+    BLANK()
+)
+
+// Table: 03 Operational Measures
+Operational Heatmap Value =
+VAR SelectedMetric =
+    SELECTEDVALUE(
+        'Operational Heatmap Selector'[Metric],
+        "Capacity Utilisation %"
+    )
+RETURN
+    SWITCH(
+        SelectedMetric,
+        "Capacity Utilisation %", [Capacity Utilisation %],
+        "DNA Rate %", [DNA Rate %],
+        "Cancellation Rate %", [Cancellation Rate %],
+        "Scheduled Appointments", [Scheduled Appointments]
+    )
+
+// Table: 03 Operational Measures
+Operational Heatmap Colour =
+VAR Metric =
+    SELECTEDVALUE(
+        'Operational Heatmap Selector'[Metric],
+        "Capacity Utilisation %"
+    )
+VAR Val = [Operational Heatmap Value]
+
+RETURN
+IF(
+    ISBLANK(Val),
+    BLANK(),
+    SWITCH(
+        Metric,
+
+        "Capacity Utilisation %",
+            SWITCH(
+                TRUE(),
+                Val >= 0.90, "#D9EAD3",
+                Val >= 0.85, "#FCE5CD",
+                "#F4CCCC"
+            ),
+
+        "DNA Rate %",
+            SWITCH(
+                TRUE(),
+                Val <= 0.05, "#D9EAD3",
+                Val <= 0.07, "#FCE5CD",
+                "#F4CCCC"
+            ),
+
+        "Cancellation Rate %",
+            SWITCH(
+                TRUE(),
+                Val <= 0.05, "#D9EAD3",
+                Val <= 0.08, "#FCE5CD",
+                "#F4CCCC"
+            ),
+
+        "Scheduled Appointments",
+            "",
+
+        BLANK()
+    )
+)
+
+// Table: 03 Operational Measures
+Operational Heatmap Title =
+SELECTEDVALUE(
+    'Operational Heatmap Selector'[Metric],
+    "Capacity Utilisation %"
+)
+& " by Day & Time"
+
+// Table: 04 Patient Measures
+Unique Patients =
+DISTINCTCOUNT(fact_appointments[patient_id])
+
+// Table: 04 Patient Measures
+Appointments per Patient =
+DIVIDE(
+    [Total Appointments],
+    [Unique Patients]
+)
+
+// Table: 04 Patient Measures
+Patients with DNA =
+CALCULATE(
+    DISTINCTCOUNT(fact_appointments[patient_id]),
+    fact_appointments[dna_flag] = 1
+)
+
+// Table: 04 Patient Measures
+Repeat DNA Patients =
+COUNTROWS(
+    FILTER(
+        VALUES(fact_appointments[patient_id]),
+        CALCULATE([DNA Appointments]) >= 2
+    )
+)
+
+// Table: 04 Patient Measures
+Repeat DNA Rate % =
+DIVIDE(
+    [Repeat DNA Patients],
+    [Patients with DNA]
+)
+
+// Table: 04 Patient Measures
+Average Lead Time DNA =
+CALCULATE(
+    [Average Lead Time],
+    fact_appointments[dna_flag] = 1
+)
+
+// Table: 04 Patient Measures
+DNA Lead Time Gap =
+[Average Lead Time DNA] - [Average Lead Time]
+
+// Table: 05 Improvement Measures
+Potential Appointments Recovered =
+[DNA Appointments] *
+[DNA Reduction Target Value]
+
+// Table: 05 Improvement Measures
+Potential Hours Recovered =
+[DNA Slot Hours] *
+[DNA Reduction Target Value]
+
+// Table: 05 Improvement Measures
+Projected DNA Appointments =
+[DNA Appointments] *
+(1 - [DNA Reduction Target Value])
+
+// Table: 05 Improvement Measures
+Projected DNA Rate % =
+[DNA Rate %] *
+(1 - [DNA Reduction Target Value])
+
+// Table: 05 Improvement Measures
+Estimated DNA Cost =
+CALCULATE(
+    SUM(fact_appointments[illustrative_slot_cost_gbp]),
+    fact_appointments[dna_flag] = 1
+)
+
+// Table: 05 Improvement Measures
+Potential Cost Avoidance =
+[Estimated DNA Cost] *
+[DNA Reduction Target Value]
+
+// Table: 05 Improvement Measures
+Projected Attendance Rate % =
+VAR ProjectedDNA = [Projected DNA Appointments]
+VAR CompletedAppointments =
+    [Completed Outcome Appointments]
+RETURN
+DIVIDE(
+    [Attended Appointments]
+        + [Potential Appointments Recovered],
+    CompletedAppointments
+)
+
+// Table: 05 Improvement Measures
+Specialty DNA Rank =
+IF(
+    ISBLANK([DNA Appointments]),
+    BLANK(),
+    RANKX(
+        ALLSELECTED(dim_specialties[specialty_name]),
+        [DNA Appointments],
+        ,
+        DESC,
+        DENSE
+    )
+)
+
+// Table: 05 Improvement Measures
+Projected Lost Slot Hours =
+[DNA Slot Hours] -
+[Potential Hours Recovered]
+
+// Table: 05 Improvement Measures
+Projected DNA Cost =
+[Estimated DNA Cost] -
+[Potential Cost Avoidance]
+
+// Table: 06_Dynamic_Insights
+Highest DNA Specialty Insight =
+VAR RankedSpecialties =
+    TOPN(
+        1,
+        FILTER(
+            ADDCOLUMNS(
+                ALLSELECTED(dim_specialties[specialty_name]),
+                "@Rate", [DNA Rate %],
+                "@Volume", [Completed Outcome Appointments]
+            ),
+            [@Volume] >= 30
+                && NOT ISBLANK([@Rate])
+        ),
+        [@Rate], DESC,
+        dim_specialties[specialty_name], ASC
+    )
+VAR Specialty =
+    MAXX(
+        RankedSpecialties,
+        dim_specialties[specialty_name]
+    )
+VAR Rate =
+    MAXX(RankedSpecialties, [@Rate])
+RETURN
+IF(
+    ISBLANK(Specialty),
+    "Insufficient data for specialty comparison.",
+    Specialty & " has the highest DNA rate at "
+        & FORMAT(Rate, "0.0%") & "."
+)
+
+// Table: 06_Dynamic_Insights
+DNA Trend Insight =
+VAR Change = [DNA Rate YoY pp]
+RETURN
+SWITCH(
+    TRUE(),
+    ISBLANK(Change),
+        "No comparable previous-year data.",
+    Change > 0,
+        "DNA rate increased by "
+        & FORMAT(Change, "0.0")
+        & " percentage points versus last year.",
+    Change < 0,
+        "DNA rate decreased by "
+        & FORMAT(ABS(Change), "0.0")
+        & " percentage points versus last year.",
+    "DNA rate is unchanged versus last year."
+)
+
+// Table: 06_Dynamic_Insights
+Lead Time Insight =
+VAR DNALeadTime = [Average Lead Time DNA]
+VAR OverallLeadTime = [Average Lead Time]
+RETURN
+IF(
+    ISBLANK(DNALeadTime),
+    "No missed appointments in this selection.",
+    "Average booking lead time for missed appointments: "
+    & FORMAT(DNALeadTime, "0.0")
+    & " days, compared with "
+    & FORMAT(OverallLeadTime, "0.0")
+    & " days across all appointments."
+)
+
+// Table: 06_Dynamic_Insights
+Scenario Insight =
+VAR Reduction =
+    [DNA Reduction Target Value]
+VAR Appointments =
+    [Potential Appointments Recovered]
+VAR Hours =
+    [Potential Hours Recovered]
+RETURN
+IF(
+    ISBLANK([DNA Appointments]),
+    "No appointment data available.",
+    "A hypothetical "
+        & FORMAT(Reduction, "0%")
+        & " reduction in missed appointments could free approximately "
+        & FORMAT(Appointments, "#,##0")
+        & " appointments and "
+        & FORMAT(Hours, "#,##0.0")
+        & " clinical slot hours in the selected period."
+)
+
+// Table: 06_Dynamic_Insights
+Priority Specialty Insight =
+VAR Ranked =
+    TOPN(
+        1,
+        FILTER(
+            ADDCOLUMNS(
+                ALLSELECTED(dim_specialties[specialty_name]),
+                "@DNA", [DNA Appointments],
+                "@Rate", [DNA Rate %]
+            ),
+            [@DNA] > 0
+        ),
+        [@DNA], DESC,
+        dim_specialties[specialty_name], ASC
+    )
+VAR Specialty =
+    MAXX(Ranked, dim_specialties[specialty_name])
+VAR Missed =
+    MAXX(Ranked, [@DNA])
+RETURN
+IF(
+    ISBLANK(Specialty),
+    "No missed appointments in this selection.",
+    "Prioritise reviewing " & Specialty
+        & ", which accounts for "
+        & FORMAT(Missed, "#,##0")
+        & " missed appointments in the selected period."
+)
+
+// Table: 06_Dynamic_Insights
+Executive Performance Summary =
+VAR DNA = [DNA Rate %]
+VAR Attendance = [Attendance Rate %]
+VAR YoY = [DNA Rate YoY pp]
+VAR Hours = [DNA Slot Hours]
+VAR Cost = [Estimated DNA Cost]
+
+RETURN
+IF(
+    ISBLANK(DNA),
+    "No data available for the selected filters.",
+
+    "PERFORMANCE SUMMARY"
+    & UNICHAR(10)
+    & "Attendance stands at "
+    & FORMAT(Attendance, "0.0%")
+    & ", with a DNA rate of "
+    & FORMAT(DNA, "0.0%")
+    & ". "
+
+    & SWITCH(
+        TRUE(),
+        ISBLANK(YoY), "",
+        YoY < 0,
+            "DNA rate improved by "
+            & FORMAT(ABS(YoY), "0.00")
+            & " pp year on year.",
+        YoY > 0,
+            "DNA rate increased by "
+            & FORMAT(YoY, "0.00")
+            & " pp year on year.",
+        "DNA rate is unchanged year on year."
+    )
+
+    & UNICHAR(10) & UNICHAR(10)
+
+    & "SERVICE IMPACT"
+    & UNICHAR(10)
+    & "Missed appointments account for "
+    & FORMAT(Hours, "#,##0.0")
+    & " slot hours and an estimated "
+    & FORMAT(Cost, "£#,##0")
+    & " in costs."
+)
+
+// Table: 06_Dynamic_Insights
+Improvement Opportunities & Priorities =
+VAR Target = [DNA Reduction Target Value]
+VAR Hours = [Potential Hours Recovered]
+VAR Appts = [Potential Appointments Recovered]
+VAR Cost = [Potential Cost Avoidance]
+VAR Attendance = [Projected Attendance Rate %]
+
+VAR SpecialtyTable =
+    ADDCOLUMNS(
+        ALLSELECTED(dim_specialties[specialty_name]),
+        "@Hours", [Potential Hours Recovered]
+    )
+
+VAR TopSpecialty =
+    TOPN(
+        1,
+        FILTER(SpecialtyTable, [@Hours] > 0),
+        [@Hours], DESC,
+        dim_specialties[specialty_name], ASC
+    )
+
+VAR SpecialtyName =
+    CONCATENATEX(
+        TopSpecialty,
+        dim_specialties[specialty_name]
+    )
+
+VAR SpecialtyHours =
+    MAXX(TopSpecialty, [@Hours])
+
+RETURN
+IF(
+    ISBLANK([DNA Rate %]),
+    "No opportunity data for selected filters.",
+
+    "IMPROVEMENT OPPORTUNITY"
+    & UNICHAR(10)
+    & "A "
+    & FORMAT(Target, "0%")
+    & " DNA reduction could recover "
+    & FORMAT(Appts, "#,##0")
+    & " appointments and "
+    & FORMAT(Hours, "0.0")
+    & " slot hours."
+
+    & UNICHAR(10) & UNICHAR(10)
+
+    & "ESTIMATED IMPACT"
+    & UNICHAR(10)
+    & "Projected attendance could reach "
+    & FORMAT(Attendance, "0.0%")
+    & ", with potential cost avoidance of "
+    & FORMAT(Cost, "£#,##0")
+    & "."
+
+    & UNICHAR(10) & UNICHAR(10)
+
+    & "MANAGEMENT PRIORITY"
+    & UNICHAR(10)
+
+    & IF(
+        COUNTROWS(TopSpecialty) > 0,
+        "Assess interventions in "
+        & SpecialtyName
+        & ", which offers the greatest potential "
+        & "capacity recovery ("
+        & FORMAT(SpecialtyHours, "0.0")
+        & " hours).",
+
+        "Select a positive reduction target or "
+        & "review baseline attendance performance."
+    )
+)
+
+// Table: 06_Dynamic_Insights
+Attendance Insights & Priorities =
+VAR DNA = [DNA Rate %]
+VAR LeadGap = [DNA Lead Time Gap]
+
+VAR LeadTable =
+    ADDCOLUMNS(
+        ALLSELECTED(fact_appointments[Lead Time Band]),
+        "@DNA", [DNA Rate %],
+        "@Volume", [Scheduled Slots]
+    )
+
+VAR WorstLead =
+    TOPN(
+        1,
+        FILTER(
+            LeadTable,
+            [@Volume] >= 100
+                && NOT ISBLANK([@DNA])
+        ),
+        [@DNA], DESC,
+        fact_appointments[Lead Time Band], ASC
+    )
+
+VAR WorstLeadName =
+    CONCATENATEX(
+        WorstLead,
+        fact_appointments[Lead Time Band]
+    )
+
+VAR WorstLeadRate =
+    MAXX(WorstLead, [@DNA])
+
+VAR IMDTable =
+    ADDCOLUMNS(
+        FILTER(
+            ALLSELECTED(dim_patients[imd_decile]),
+            NOT ISBLANK(dim_patients[imd_decile])
+        ),
+        "@DNA", [DNA Rate %],
+        "@Volume", [Scheduled Slots]
+    )
+
+VAR EligibleIMD =
+    FILTER(
+        IMDTable,
+        [@Volume] >= 100
+            && NOT ISBLANK([@DNA])
+    )
+
+VAR HighestIMD =
+    TOPN(
+        1,
+        EligibleIMD,
+        [@DNA], DESC,
+        dim_patients[imd_decile], ASC
+    )
+
+VAR LowestIMD =
+    TOPN(
+        1,
+        EligibleIMD,
+        [@DNA], ASC,
+        dim_patients[imd_decile], ASC
+    )
+
+RETURN
+IF(
+    ISBLANK(DNA),
+    "No attendance data for selected filters.",
+
+    "BOOKING & ATTENDANCE PATTERNS"
+    & UNICHAR(10)
+
+    & IF(
+        COUNTROWS(WorstLead) > 0,
+        "The highest eligible DNA rate occurs in "
+        & WorstLeadName
+        & " ("
+        & FORMAT(WorstLeadRate, "0.00%")
+        & "). ",
+        "Insufficient volume to rank lead time groups. "
+    )
+
+    & SWITCH(
+        TRUE(),
+        ISBLANK(LeadGap), "",
+        LeadGap > 0,
+            "Missed appointments have lead times "
+            & FORMAT(LeadGap, "0.0")
+            & " days longer than average.",
+        LeadGap < 0,
+            "Missed appointments have lead times "
+            & FORMAT(ABS(LeadGap), "0.0")
+            & " days shorter than average.",
+        "Average lead times are similar."
+    )
+
+    & UNICHAR(10) & UNICHAR(10)
+
+    & "HEALTH INEQUALITIES"
+    & UNICHAR(10)
+
+    & IF(
+        COUNTROWS(EligibleIMD) >= 2,
+
+        "DNA rates range from "
+        & FORMAT(MAXX(LowestIMD, [@DNA]), "0.00%")
+        & " in IMD decile "
+        & MAXX(
+            LowestIMD,
+            dim_patients[imd_decile]
+        )
+        & " to "
+        & FORMAT(MAXX(HighestIMD, [@DNA]), "0.00%")
+        & " in decile "
+        & MAXX(
+            HighestIMD,
+            dim_patients[imd_decile]
+        )
+        & ".",
+
+        "Insufficient comparable groups to assess "
+        & "deprivation differences."
+    )
+
+    & UNICHAR(10) & UNICHAR(10)
+
+    & "MANAGEMENT PRIORITY"
+    & UNICHAR(10)
+    & "Investigate attendance barriers and consider "
+    & "targeted reminders and flexible scheduling."
+)
+
+// Table: 06_Dynamic_Insights
+Operational Insights & Priorities =
+VAR Utilisation = [Capacity Utilisation %]
+VAR Scheduled = [Scheduled Slots]
+VAR LostSlots = [Non-Attended Slots]
+VAR Cancelled = [Cancelled Appointments]
+VAR DNA = [DNA Appointments]
+VAR CancelledShare = DIVIDE(Cancelled, LostSlots)
+
+RETURN
+IF(
+    ISBLANK(Utilisation),
+    "No operational data for selected filters.",
+
+    "CAPACITY & DELIVERY"
+    & UNICHAR(10)
+    & "Of "
+    & FORMAT(Scheduled, "#,##0")
+    & " scheduled appointments, "
+    & FORMAT(LostSlots, "#,##0")
+    & " were not attended. "
+
+    & IF(
+        LostSlots > 0,
+        "Cancellations account for "
+        & FORMAT(CancelledShare, "0.0%")
+        & " of non-attended appointments.",
+        ""
+    )
+
+    & UNICHAR(10) & UNICHAR(10)
+
+    & "MANAGEMENT PRIORITY"
+    & UNICHAR(10)
+
+    & SWITCH(
+        TRUE(),
+
+        LostSlots <= 0,
+            "Maintain current delivery performance.",
+
+        Cancelled > DNA,
+            "Review cancellation patterns, booking "
+            & "processes and opportunities to "
+            & "reallocate cancelled slots.",
+
+        DNA > Cancelled,
+            "Investigate non-attendance patterns "
+            & "and targeted appointment reminders.",
+
+        "Review cancellation and DNA patterns "
+        & "to improve delivered activity."
+    )
+)
+
+// Table: DNA Reduction Target
+DNA Reduction Target Value =
+SELECTEDVALUE('DNA Reduction Target'[DNA Reduction Target], 0.2)
+
+// Table: Scenario Comparison
+Scenario Baseline =
+SWITCH(
+    SELECTEDVALUE('Scenario Comparison'[Metric]),
+    "DNA Appointments", [DNA Appointments],
+    "DNA Rate", [DNA Rate %],
+    "Attendance Rate", [Attendance Rate %],
+    "Lost Slot Hours", [DNA Slot Hours],
+    "Estimated DNA Cost", [Estimated DNA Cost]
+)
+
+// Table: Scenario Comparison
+Scenario Projected =
+SWITCH(
+    SELECTEDVALUE('Scenario Comparison'[Metric]),
+    "DNA Appointments", [Projected DNA Appointments],
+    "DNA Rate", [Projected DNA Rate %],
+    "Attendance Rate", [Projected Attendance Rate %],
+    "Lost Slot Hours", [Projected Lost Slot Hours],
+    "Estimated DNA Cost", [Projected DNA Cost]
+)

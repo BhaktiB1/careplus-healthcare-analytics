@@ -1,0 +1,157 @@
+﻿Table,Column,Model data type (if explicit),Source column,Kind,Format,Expression,Auto date table
+01 Appointment Measures,Column,,[Column],Model column,0,,No
+02 Time Intelligence,Column,,[Column],Model column,0,,No
+03 Operational Measures,Column,,[Column],Model column,0,,No
+04 Patient Measures,Column,,[Column],Model column,0,,No
+05 Improvement Measures,Column,,[Column],Model column,0,,No
+06_Dynamic_Insights,Column,,[Column],Model column,0,,No
+calendar,Date,,[Date],Model column,General Date,,No
+calendar,Year,,[Year],Model column,0,,No
+calendar,Month Number,,[Month Number],Model column,0,,No
+calendar,Month Name,,[Month Name],Model column,,,No
+calendar,Month Short,,[Month Short],Model column,,,No
+calendar,Year Month,,[Year Month],Model column,,,No
+calendar,Quarter,,[Quarter],Model column,,,No
+calendar,Year Quarter,,[Year Quarter],Model column,,,No
+calendar,Month Start,,[Month Start],Model column,General Date,,No
+Capacity Waterfall,Stage,,[Stage],Model column,,,No
+Capacity Waterfall,Sort Order,,[Sort Order],Model column,0,,No
+DateTableTemplate_b40c29dd-eeee-40c5-9544-a7fd3bde7a39,Date,dateTime,[Date],Model column,General Date,,Yes
+DateTableTemplate_b40c29dd-eeee-40c5-9544-a7fd3bde7a39,Year,int64,,Calculated column,0,YEAR([Date]),Yes
+DateTableTemplate_b40c29dd-eeee-40c5-9544-a7fd3bde7a39,MonthNo,int64,,Calculated column,0,MONTH([Date]),Yes
+DateTableTemplate_b40c29dd-eeee-40c5-9544-a7fd3bde7a39,Month,string,,Calculated column,,"FORMAT([Date], ""MMMM"")",Yes
+DateTableTemplate_b40c29dd-eeee-40c5-9544-a7fd3bde7a39,QuarterNo,int64,,Calculated column,0,INT(([MonthNo] + 2) / 3),Yes
+DateTableTemplate_b40c29dd-eeee-40c5-9544-a7fd3bde7a39,Quarter,string,,Calculated column,,"""Qtr "" & [QuarterNo]",Yes
+DateTableTemplate_b40c29dd-eeee-40c5-9544-a7fd3bde7a39,Day,int64,,Calculated column,0,DAY([Date]),Yes
+dim_hospitals,hospital_id,string,hospital_id,Model column,,,No
+dim_hospitals,hospital_name,string,hospital_name,Model column,,,No
+dim_hospitals,region,string,region,Model column,,,No
+dim_patients,patient_id,string,patient_id,Model column,,,No
+dim_patients,age_at_reference,int64,age_at_reference,Model column,0,,No
+dim_patients,imd_decile,int64,imd_decile,Model column,0,,No
+dim_patients,gender,string,gender,Model column,,,No
+dim_patients,ethnicity,string,ethnicity,Model column,,,No
+dim_patients,Age Group,,,Calculated column,,"SWITCH(
+    TRUE(),
+    dim_patients[age_at_reference] < 18,
+        ""0–17"",
+    dim_patients[age_at_reference] < 30,
+        ""18–29"",
+    dim_patients[age_at_reference] < 45,
+        ""30–44"",
+    dim_patients[age_at_reference] < 60,
+        ""45–59"",
+    dim_patients[age_at_reference] < 75,
+        ""60–74"",
+    ""75+""
+)",No
+dim_specialties,specialty_id,string,specialty_id,Model column,,,No
+dim_specialties,specialty_name,string,specialty_name,Model column,,,No
+DNA Reduction Target,DNA Reduction Target,,[Value],Model column,0%;-0%;0%,,No
+fact_appointments,appointment_id,string,appointment_id,Model column,,,No
+fact_appointments,patient_id,string,patient_id,Model column,,,No
+fact_appointments,specialty_id,string,specialty_id,Model column,,,No
+fact_appointments,hospital_id,string,hospital_id,Model column,,,No
+fact_appointments,appointment_date,dateTime,appointment_date,Model column,Long Date,,No
+fact_appointments,booking_date,dateTime,booking_date,Model column,Long Date,,No
+fact_appointments,lead_time_days,int64,lead_time_days,Model column,0,,No
+fact_appointments,appointment_type,string,appointment_type,Model column,,,No
+fact_appointments,consultation_mode,string,consultation_mode,Model column,,,No
+fact_appointments,appointment_time,dateTime,appointment_time,Model column,Long Time,,No
+fact_appointments,slot_minutes,int64,slot_minutes,Model column,0,,No
+fact_appointments,appointment_status,string,appointment_status,Model column,,,No
+fact_appointments,dna_flag,int64,dna_flag,Model column,0,,No
+fact_appointments,attended_flag,int64,attended_flag,Model column,0,,No
+fact_appointments,cancelled_flag,int64,cancelled_flag,Model column,0,,No
+fact_appointments,illustrative_tariff_gbp,int64,illustrative_tariff_gbp,Model column,0,,No
+fact_appointments,illustrative_slot_cost_gbp,int64,illustrative_slot_cost_gbp,Model column,"""£""#,0.00;-""£""#,0.00;""£""#,0.00",,No
+fact_appointments,Lead Time Band,,,Calculated column,,"SWITCH(
+    TRUE(),
+    fact_appointments[lead_time_days] <= 7,
+        ""0–7 days"",
+    fact_appointments[lead_time_days] <= 14,
+        ""8–14 days"",
+    fact_appointments[lead_time_days] <= 28,
+        ""15–28 days"",
+    fact_appointments[lead_time_days] <= 56,
+        ""29–56 days"",
+    ""57+ days""
+)",No
+fact_appointments,Lead Time Band Sort,,,Calculated column,0,"VAR Days = fact_appointments[lead_time_days]
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK(Days), BLANK(),
+        Days <= 7, 1,
+        Days <= 14, 2,
+        Days <= 28, 3,
+        Days <= 56, 4,
+        5
+    )",No
+fact_appointments,Appointment Day,,,Calculated column,,"FORMAT(
+    fact_appointments[appointment_date],
+    ""dddd""
+)",No
+fact_appointments,Appointment Day Sort,,,Calculated column,0,"WEEKDAY(
+    fact_appointments[appointment_date],
+    2
+)",No
+fact_appointments,Appointment Time Band,,,Calculated column,,"VAR ApptHour =
+    HOUR(fact_appointments[appointment_time])
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK(fact_appointments[appointment_time]), BLANK(),
+        ApptHour < 8, ""Before 08:00"",
+        ApptHour < 10, ""08:00–10:00"",
+        ApptHour < 12, ""10:00–12:00"",
+        ApptHour < 14, ""12:00–14:00"",
+        ApptHour < 16, ""14:00–16:00"",
+        ApptHour < 18, ""16:00–18:00"",
+        ""18:00 onwards""
+    )",No
+fact_appointments,Appointment Time Band Sort,,,Calculated column,0,"VAR ApptHour =
+    HOUR(fact_appointments[appointment_time])
+RETURN
+    SWITCH(
+        TRUE(),
+        ISBLANK(fact_appointments[appointment_time]), BLANK(),
+        ApptHour < 8, 1,
+        ApptHour < 10, 2,
+        ApptHour < 12, 3,
+        ApptHour < 14, 4,
+        ApptHour < 16, 5,
+        ApptHour < 18, 6,
+        7
+    )",No
+fact_daily_capacity,date,dateTime,date,Model column,Long Date,,No
+fact_daily_capacity,hospital_id,string,hospital_id,Model column,,,No
+fact_daily_capacity,specialty_id,string,specialty_id,Model column,,,No
+fact_daily_capacity,scheduled_slots,int64,scheduled_slots,Model column,0,,No
+fact_daily_capacity,attended_slots,int64,attended_slots,Model column,0,,No
+fact_daily_capacity,available_slots_estimate,int64,available_slots_estimate,Model column,0,,No
+LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de,Date,dateTime,[Date],Model column,General Date,,Yes
+LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de,Year,int64,,Calculated column,0,YEAR([Date]),Yes
+LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de,MonthNo,int64,,Calculated column,0,MONTH([Date]),Yes
+LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de,Month,string,,Calculated column,,"FORMAT([Date], ""MMMM"")",Yes
+LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de,QuarterNo,int64,,Calculated column,0,INT(([MonthNo] + 2) / 3),Yes
+LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de,Quarter,string,,Calculated column,,"""Qtr "" & [QuarterNo]",Yes
+LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de,Day,int64,,Calculated column,0,DAY([Date]),Yes
+LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c,Date,dateTime,[Date],Model column,General Date,,Yes
+LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c,Year,int64,,Calculated column,0,YEAR([Date]),Yes
+LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c,MonthNo,int64,,Calculated column,0,MONTH([Date]),Yes
+LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c,Month,string,,Calculated column,,"FORMAT([Date], ""MMMM"")",Yes
+LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c,QuarterNo,int64,,Calculated column,0,INT(([MonthNo] + 2) / 3),Yes
+LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c,Quarter,string,,Calculated column,,"""Qtr "" & [QuarterNo]",Yes
+LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c,Day,int64,,Calculated column,0,DAY([Date]),Yes
+LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c,Date,dateTime,[Date],Model column,General Date,,Yes
+LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c,Year,int64,,Calculated column,0,YEAR([Date]),Yes
+LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c,MonthNo,int64,,Calculated column,0,MONTH([Date]),Yes
+LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c,Month,string,,Calculated column,,"FORMAT([Date], ""MMMM"")",Yes
+LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c,QuarterNo,int64,,Calculated column,0,INT(([MonthNo] + 2) / 3),Yes
+LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c,Quarter,string,,Calculated column,,"""Qtr "" & [QuarterNo]",Yes
+LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c,Day,int64,,Calculated column,0,DAY([Date]),Yes
+Operational Heatmap Selector,Metric,,[Metric],Model column,,,No
+Operational Heatmap Selector,Sort Order,,[Sort Order],Model column,0,,No
+Scenario Comparison,Metric,,[Metric],Model column,,,No
+Scenario Comparison,Sort Order,,[Sort Order],Model column,0,,No

@@ -1,0 +1,44 @@
+relationship 453d02e2-3a58-41da-b032-9247f45939da
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fact_appointments.booking_date
+	toColumn: LocalDateTable_0c44de79-c5d6-4192-9b04-b8fb293d78de.Date
+
+relationship AutoDetected_c32b91ab-604e-4920-bac2-3124134a3f96
+	fromColumn: fact_appointments.hospital_id
+	toColumn: dim_hospitals.hospital_id
+
+relationship AutoDetected_832829e3-e81a-4187-b04a-deb844cdfef8
+	fromColumn: fact_daily_capacity.hospital_id
+	toColumn: dim_hospitals.hospital_id
+
+relationship AutoDetected_15296982-1cee-4609-9eb3-81d1dd1001f8
+	fromColumn: fact_appointments.patient_id
+	toColumn: dim_patients.patient_id
+
+relationship AutoDetected_404c1e76-b89e-4a6f-b403-c8216625a31f
+	fromColumn: fact_appointments.specialty_id
+	toColumn: dim_specialties.specialty_id
+
+relationship AutoDetected_9a9ebc1f-8b85-4213-b46c-46cc41ff6192
+	fromColumn: fact_daily_capacity.specialty_id
+	toColumn: dim_specialties.specialty_id
+
+relationship 0475052e-942e-4558-b41d-433a725da568
+	joinOnDateBehavior: datePartOnly
+	fromColumn: calendar.Date
+	toColumn: LocalDateTable_7653f0f6-bd78-4135-9810-c83fae6ad74c.Date
+
+relationship f431b917-4f0c-423a-ae9f-1f99cbabda2a
+	joinOnDateBehavior: datePartOnly
+	fromColumn: calendar.'Month Start'
+	toColumn: LocalDateTable_c2dfcd72-6a1e-4e0b-871b-31b11cb2856c.Date
+
+relationship 2d678b46-9a5c-2a8b-f8f5-bf351c25e0ef
+	fromColumn: fact_appointments.appointment_date
+	toColumn: calendar.Date
+
+relationship 6b92d9fa-d946-9b83-e9b1-97b14536df95
+	fromColumn: fact_daily_capacity.date
+	toColumn: calendar.Date
+
+

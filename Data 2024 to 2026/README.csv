@@ -1,0 +1,6 @@
+file,grain,description
+dim_patients.csv,one row per fictional patient,Demographics; reference age is not age at each appointment
+dim_specialties.csv,one row per specialty,Specialty lookup
+dim_hospitals.csv,one row per hospital,Hospital and region lookup
+fact_appointments.csv,one row per appointment,"2024-2026 synthetic appointment attendance, lead time, and illustrative costs; 2024-25 records preserved; 2026 newly simulated"
+fact_daily_capacity.csv,one row per hospital-specialty-date with scheduled appointments,Synthetic capacity estimates reconstructed from all appointments; not independent staffing data

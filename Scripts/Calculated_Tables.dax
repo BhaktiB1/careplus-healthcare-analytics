@@ -1,0 +1,85 @@
+// Table: 01 Appointment Measures
+01 Appointment Measures =
+Row("Column", BLANK())
+
+// Table: 02 Time Intelligence
+02 Time Intelligence =
+Row("Column", BLANK())
+
+// Table: 03 Operational Measures
+03 Operational Measures =
+Row("Column", BLANK())
+
+// Table: 04 Patient Measures
+04 Patient Measures =
+Row("Column", BLANK())
+
+// Table: 05 Improvement Measures
+05 Improvement Measures =
+Row("Column", BLANK())
+
+// Table: 06_Dynamic_Insights
+06_Dynamic_Insights =
+Row("Column", BLANK())
+
+// Table: calendar
+calendar =
+ADDCOLUMNS(
+    CALENDAR(
+        DATE(2024, 1, 1),
+        DATE(2026, 12, 31)
+    ),
+    "Year", YEAR([Date]),
+    "Month Number", MONTH([Date]),
+    "Month Name", FORMAT([Date], "MMMM"),
+    "Month Short", FORMAT([Date], "MMM"),
+    "Year Month", FORMAT([Date], "YYYY-MM"),
+    "Quarter", "Q" & QUARTER([Date]),
+    "Year Quarter",
+        YEAR([Date]) & "-Q" & QUARTER([Date]),
+    "Month Start",
+        DATE(YEAR([Date]), MONTH([Date]), 1)
+)
+
+// Table: Capacity Waterfall
+Capacity Waterfall =
+DATATABLE(
+    "Stage", STRING,
+    "Sort Order", INTEGER,
+    {
+        {"Scheduled", 1},
+        {"Cancelled", 2},
+        {"DNA", 3}
+    }
+)
+
+// Table: DNA Reduction Target
+DNA Reduction Target =
+GENERATESERIES(0, 0.3, 0.05)
+
+// Table: Operational Heatmap Selector
+Operational Heatmap Selector =
+DATATABLE(
+    "Metric", STRING,
+    "Sort Order", INTEGER,
+    {
+        {"Capacity Utilisation %", 1},
+        {"DNA Rate %", 2},
+        {"Cancellation Rate %", 3},
+        {"Scheduled Appointments", 4}
+    }
+)
+
+// Table: Scenario Comparison
+Scenario Comparison =
+DATATABLE(
+    "Metric", STRING,
+    "Sort Order", INTEGER,
+    {
+        {"DNA Appointments", 1},
+        {"DNA Rate", 2},
+        {"Attendance Rate", 3},
+        {"Lost Slot Hours", 4},
+        {"Estimated DNA Cost", 5}
+    }
+)

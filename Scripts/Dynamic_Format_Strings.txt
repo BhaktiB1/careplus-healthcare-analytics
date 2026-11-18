@@ -1,0 +1,72 @@
+// 03 Operational Measures | Operational Heatmap Value
+			
+			VAR SelectedMetric =
+			    SELECTEDVALUE(
+			        'Operational Heatmap Selector'[Metric],
+			        "Capacity Utilisation %"
+			    )
+			RETURN
+			    SWITCH(
+			        SelectedMetric,
+			        "Capacity Utilisation %", [Capacity Utilisation %],
+			        "DNA Rate %", [DNA Rate %],
+			        "Cancellation Rate %", [Cancellation Rate %],
+			        "Scheduled Appointments", [Scheduled Appointments]
+			    )
+		lineageTag: 55c4a362-1e34-4276-adf9-c0ef607805f8
+
+		formatStringDefinition =
+				SWITCH(
+				    SELECTEDVALUE(
+				        'Operational Heatmap Selector'[Metric]
+				    ),
+				    "Scheduled Appointments", "#,##0",
+				    "0.00%"
+				)
+
+
+// Scenario Comparison | Scenario Baseline
+			
+			SWITCH(
+			    SELECTEDVALUE('Scenario Comparison'[Metric]),
+			    "DNA Appointments", [DNA Appointments],
+			    "DNA Rate", [DNA Rate %],
+			    "Attendance Rate", [Attendance Rate %],
+			    "Lost Slot Hours", [DNA Slot Hours],
+			    "Estimated DNA Cost", [Estimated DNA Cost]
+			)
+		lineageTag: 373953c9-fb6a-4c50-8995-c961829b36ea
+
+		formatStringDefinition =
+				SWITCH(
+				    SELECTEDVALUE('Scenario Comparison'[Metric]),
+				    "DNA Appointments", "#,##0",
+				    "DNA Rate", "0.00%",
+				    "Attendance Rate", "0.00%",
+				    "Lost Slot Hours", "#,##0.00",
+				    "Estimated DNA Cost", "£#,##0"
+				)
+
+
+// Scenario Comparison | Scenario Projected
+			
+			SWITCH(
+			    SELECTEDVALUE('Scenario Comparison'[Metric]),
+			    "DNA Appointments", [Projected DNA Appointments],
+			    "DNA Rate", [Projected DNA Rate %],
+			    "Attendance Rate", [Projected Attendance Rate %],
+			    "Lost Slot Hours", [Projected Lost Slot Hours],
+			    "Estimated DNA Cost", [Projected DNA Cost]
+			)
+		lineageTag: 54960fb7-977d-47bd-8b1a-1e583692764f
+
+		formatStringDefinition =
+				SWITCH(
+				    SELECTEDVALUE('Scenario Comparison'[Metric]),
+				    "DNA Appointments", "#,##0",
+				    "DNA Rate", "0.00%",
+				    "Attendance Rate", "0.00%",
+				    "Lost Slot Hours", "#,##0.00",
+				    "Estimated DNA Cost", "£#,##0"
+				)
+
