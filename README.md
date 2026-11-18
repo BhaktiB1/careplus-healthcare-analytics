@@ -39,6 +39,7 @@ Attendance and DNA rates exclude cancellations, whereas booked-slot utilisation 
 ### 1. Overview
 
 Executive appointment KPIs, current and prior-year trends, rolling DNA rate, specialty and hospital comparisons and appointment outcomes.
+[View Overview dashboard](Screenshots/01.%20Overview.png)
 
 ### 2. Operational performance
 
@@ -50,7 +51,7 @@ Capacity utilisation, appointment outcome waterfall, mode-level comparisons, hos
 
 Repeat non-attendance, age and deprivation patterns, appointment characteristics and booking lead-time analysis.
 
-![Attendance dashboard](Screenshots/03.%20Attendance.png)
+![Attendance dashboard](Screenshots/03.%20Attendence.png)
 
 ### 4. Opportunities and scenario modelling
 
