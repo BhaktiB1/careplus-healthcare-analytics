@@ -1,4 +1,4 @@
-# CarePulse | Outpatient Performance & Attendance Analytics
+# CarePlus | Outpatient Performance & Attendance Analytics
 
 **Healthcare Analytics · Business Intelligence · Operational Performance · Scenario Modelling**
 
@@ -6,9 +6,9 @@
 
 ## Project overview
 
-CarePulse is an independently developed Power BI solution for a fictional outpatient healthcare service. It explores appointment attendance, booked-slot utilisation, non-attendance patterns and potential opportunities to recover clinical capacity. The solution combines descriptive analysis with interactive what-if modelling to support operational planning.
+CarePlus is an independently developed Power BI solution for a fictional outpatient healthcare service. It explores appointment attendance, booked-slot utilisation, non-attendance patterns and potential opportunities to recover clinical capacity. The solution combines descriptive analysis with interactive what-if modelling to support operational planning.
 
-![CarePulse executive overview](Screenshots/01.%20Overview.png)
+![CarePlus executive overview](Screenshots/01.%20Overview.png)
 
 ## Business objectives
 
@@ -85,7 +85,7 @@ The scenario represents approximately **185 recovered appointments, 80.5 recover
 
 Appointment-level records and daily hospital-specialty capacity are supported by shared hospital, specialty and calendar dimensions. Patient attributes filter appointment records. The different fact-table grains are important when interpreting capacity and patient-level metrics.
 
-![CarePulse data model](Screenshots/05.%20Data%20model.png)
+![CarePlus data model](Screenshots/05.%20Data%20model.png)
 
 ## Business recommendations
 
